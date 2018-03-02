@@ -47,11 +47,14 @@ class UnpackingCache
     {
         ++number_of_lookups;
         bool edge_is_in_cache = cache.find(edge) != cache.end();
-        // if (edge_is_in_cache) {
-        // 	std::cout << edge.first << ", " << edge.second << " true" << std::endl;
-        // } else {
-        // 	std::cout << edge.first << ", " << edge.second << " false" << std::endl;
-        // }
+        if (edge_is_in_cache)
+        {
+            std::cout << edge.first << ", " << edge.second << " true" << std::endl;
+        }
+        else
+        {
+            std::cout << edge.first << ", " << edge.second << " false" << std::endl;
+        }
         return edge_is_in_cache;
     }
 
@@ -66,6 +69,7 @@ class UnpackingCache
         //		- increment number_of_lookups, number_of_misses
         //		- insert edge into map with value 1
 
+        std::cout << "Collected Stats" << std::endl;
         if (cache.find(edge) == cache.end())
         {
             ++number_of_misses;
@@ -79,11 +83,12 @@ class UnpackingCache
 
     void PrintStats()
     {
-        // std::cout << "Total Misses :" << number_of_misses << " Total Finds: " << number_of_finds
-        //           << " Total Lookups: " << number_of_lookups << " Cache size: " << cache.size()
-        //           << std::endl;
-        std::cout << number_of_misses << "," << number_of_finds << "," << number_of_lookups << ","
-                  << cache.size() << std::endl;
+        std::cout << "Total Misses :" << number_of_misses << " Total Finds: " << number_of_finds
+                  << " Total Lookups: " << number_of_lookups << " Cache size: " << cache.size()
+                  << std::endl;
+        // std::cout << number_of_misses << "," << number_of_finds << "," << number_of_lookups <<
+        // ","
+        //           << cache.size() << std::endl;
     }
 
     void AddEdge(std::pair<NodeID, NodeID> edge)

@@ -226,6 +226,44 @@ EdgeWeight getLoopWeight(const DataFacade<Algorithm> &facade, NodeID node)
  * @param callback void(const std::pair<NodeID, NodeID>, const EdgeID &) called for each
  * original edge found.
  */
+
+// Function needs to:
+// 1. SUM UP THE DURATION OF THE PATH
+// 2. UNPACK THE PATH
+
+// two stacks --
+// one is for the edges
+// one is for the associated durations
+
+// edge stack
+// --------------
+// get edge (u,v)
+// check if it's in the cache:
+// - if it's in the cache, put the value in the duration stack
+//     continue with the next element in the stack
+// - if it's not in the cache:
+//     did we process the child edge yet? yes if we have seen the edge before --> move to steps in
+//     duration stack steps
+//     if no, we need to determine child edges by executing the "normal body"
+
+// -------------------------------------------------------
+// duration computation using method similar to annotatePath but limited to single edge duration
+// caculations
+// --------------------------------------------------------
+
+// --------------------------------------------------------
+// duration computation if we have children (duration stack)
+// --------------------------------------------------------
+// 1. every time we see an edge we've seen before (u,v) (from a boolean flag maybe) <- this means
+// we've already processed it's child edges
+// 2. take the top two duration values and sum them up (pop them out of the stack)<-- this is the
+// duration value for (u,v)
+// 3. put this summed value, suv, into the cache
+// 4. push the summed value onto the top of this durations stack
+
+// (should have two values at the beginning of this process, and a total of one less at the end of
+// it)
+
 template <typename BidirectionalIterator, typename Callback>
 void unpackPath(const DataFacade<Algorithm> &facade,
                 BidirectionalIterator packed_path_begin,
@@ -261,12 +299,18 @@ void unpackPath(const DataFacade<Algorithm> &facade,
     std::tuple<NodeID, NodeID, bool> edge;
     while (!recursion_stack.empty())
     {
+        // 1. populate cache -- this can only happen if we've already populated all the child edges
+        // // write
+        // 2. check if it's in the cache and if it's not, then split (u,v) up // read
         edge = recursion_stack.top();
-        recursion_stack.pop();
+        recursion_stack.pop(); // check boolean for have we already calculated subedges
+        // if we have, then look in the cache and get their entries, add them, and then  store that
+        // summed value for (u,v) in the cache
+        // if we don't, we enter the bloc of logic below:
 
+        std::cout << "inside unpacking" << std::endl;
         if (!std::get<2>(edge))
         {
-
             if (unpacking_cache.IsEdgeInCache(std::make_pair(std::get<0>(edge), std::get<1>(edge))))
             {
                 std::get<2>(edge) = true;
@@ -274,6 +318,7 @@ void unpackPath(const DataFacade<Algorithm> &facade,
 
             unpacking_cache.CollectStats(std::make_pair(std::get<0>(edge), std::get<1>(edge)));
         }
+        //-------------------- NORMAL BODY
         // Look for an edge on the forward CH graph (.forward)
         EdgeID smaller_edge_id = facade.FindSmallestEdge(
             // edge.first, edge.second, [](const auto &data) { return data.forward; });
@@ -302,6 +347,9 @@ void unpackPath(const DataFacade<Algorithm> &facade,
         BOOST_ASSERT_MSG(data.weight != std::numeric_limits<EdgeWeight>::max(),
                          "edge weight invalid");
 
+        // CHECK HAS THIS EDGE BEEN PROCESSED BEFORE?
+        // IS THE EDGE IN THE CACHE
+
         // If the edge is a shortcut, we need to add the two halfs to the stack.
         if (data.shortcut)
         { // unpack
@@ -319,7 +367,10 @@ void unpackPath(const DataFacade<Algorithm> &facade,
             // We found an original edge, call our callback.
             // std::forward<Callback>(callback)(edge, smaller_edge_id);
             std::forward<Callback>(callback)(temp, smaller_edge_id);
+            // compute the duration here and put it onto the duration stack using method similar to
+            // annotatePath but s
         }
+        //--------------- END OF NORMAL BODY
     }
 }
 
